@@ -32,22 +32,13 @@ class peadm::setup::node_manager (
   # PE INFRASTRUCTURE GROUPS
   ##################################################
 
-  # Hiera data tuning for compilers
-  $compiler_data = {
-    'puppet_enterprise::profile::puppetdb' => {
-      'gc_interval' => '0',
-    },
-    'puppet_enterprise::puppetdb' => {
-      'command_processing_threads' => 2,
-      'write_maximum_pool_size'    => 4,
-      'read_maximum_pool_size'     => 8,
-    },
-  }
-
   # We modify this group's rule such that all PE infrastructure nodes will be
   # members.
   node_group { 'PE Infrastructure Agent':
-    rule => ['and', ['~', ['trusted', 'extensions', peadm::oid('peadm_role')], '^puppet/']],
+    rule => ['or',
+      ['~', ['trusted', 'extensions', peadm::oid('peadm_role')], '^puppet/'],
+      ['~', ['fact', 'pe_server_version'], '.+']
+    ],
   }
 
   # We modify this group to add, as data, the compiler_pool_address only.
@@ -56,7 +47,7 @@ class peadm::setup::node_manager (
   node_group { 'PE Master':
     parent    => 'PE Infrastructure',
     rule      => ['or',
-      ['and', ['=', ['trusted', 'extensions', peadm::oid('peadm_role')], 'puppet/compiler']],
+      ['and', ['=', ['trusted', 'extensions', peadm::oid('pp_auth_role')], 'pe_compiler']],
       ['=', 'name', $master_host],
     ],
     data      => {
@@ -65,24 +56,13 @@ class peadm::setup::node_manager (
     variables => { 'pe_master' => true },
   }
 
-  # Create the database group if a database host is external
-  if ($puppetdb_database_host != $master_host) {
-    # This class has to be included here because puppet_enterprise is declared
-    # in the console with parameters. It is therefore not possible to include
-    # puppet_enterprise::profile::database in code without causing a conflict.
-    node_group { 'PE Database':
-      ensure               => present,
-      parent               => 'PE Infrastructure',
-      environment          => 'production',
-      override_environment => false,
-      rule                 => ['or',
-        ['and', ['=', ['trusted', 'extensions', peadm::oid('peadm_role')], 'puppet/puppetdb-database']],
-        ['=', 'name', $master_host],
-      ],
-      classes              => {
-        'puppet_enterprise::profile::database' => { },
-      },
-    }
+  # This group should pin master, puppetdb_database, and puppetdb_database_replica,
+  # but only if provided (and not just the default).
+  node_group { 'PE Database':
+    rule => ['or',
+      ['and', ['=', ['trusted', 'extensions', peadm::oid('peadm_role')], 'puppet/puppetdb-database']],
+      ['=', 'name', $master_host],
+    ]
   }
 
   # Create data-only groups to store PuppetDB PostgreSQL database configuration
@@ -108,9 +88,9 @@ class peadm::setup::node_manager (
   # having an affinity for one "availability zone" or the other.
   node_group { 'PE Compiler Group A':
     ensure  => 'present',
-    parent  => 'PE Master',
+    parent  => 'PE Compiler',
     rule    => ['and',
-      ['=', ['trusted', 'extensions', peadm::oid('peadm_role')], 'puppet/compiler'],
+      ['=', ['trusted', 'extensions', peadm::oid('pe_auth_role')], 'pe_compiler'],
       ['=', ['trusted', 'extensions', peadm::oid('peadm_availability_group')], 'A'],
     ],
     classes => {
@@ -122,7 +102,6 @@ class peadm::setup::node_manager (
         'puppetdb_port' => [8081],
       }
     },
-    data    => $compiler_data,
   }
 
   # Create the replica and B groups if a replica master and database host are
@@ -160,9 +139,9 @@ class peadm::setup::node_manager (
 
     node_group { 'PE Compiler Group B':
       ensure  => 'present',
-      parent  => 'PE Master',
+      parent  => 'PE Compiler',
       rule    => ['and',
-        ['=', ['trusted', 'extensions', peadm::oid('peadm_role')], 'puppet/compiler'],
+        ['=', ['trusted', 'extensions', peadm::oid('pe_auth_role')], 'pe_compiler'],
         ['=', ['trusted', 'extensions', peadm::oid('peadm_availability_group')], 'B'],
       ],
       classes => {
@@ -174,7 +153,6 @@ class peadm::setup::node_manager (
           'puppetdb_port' => [8081],
         }
       },
-      data    => $compiler_data,
     }
   }
 

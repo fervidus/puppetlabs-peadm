@@ -62,7 +62,6 @@ plan peadm::action::configure (
     }
 
     class { 'peadm::setup::node_manager':
-      # WORKAROUND: GH-1244
       master_host                    => $master_target.peadm::target_name(),
       master_replica_host            => $master_replica_target.peadm::target_name(),
       puppetdb_database_host         => $puppetdb_database_target.peadm::target_name(),
