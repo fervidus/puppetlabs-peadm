@@ -71,38 +71,9 @@ plan peadm::action::configure (
     }
   }
 
-  # Run Puppet in no-op on the compilers so that their status in PuppetDB
-  # is updated and they can be identified by the puppet_enterprise module as
-  # CMs
-  run_task('peadm::puppet_runonce', peadm::flatten_compact([
-    $compiler_targets,
-    $master_replica_target,
-  ]),
-    noop => true,
-  )
-
-  # Run Puppet on the PuppetDB Database hosts to update their auth
-  # configuration to allow the compilers to connect
-  run_task('peadm::puppet_runonce', peadm::flatten_compact([
-    $puppetdb_database_target,
-    $puppetdb_database_replica_target,
-  ]))
-
-  # Run Puppet on the master to ensure all services configured and
-  # running in prep for provisioning the replica. This is done separately so
-  # that a service restart of pe-puppetserver doesn't cause Puppet runs on
-  # other nodes to fail.
-  run_task('peadm::puppet_runonce', $master_target)
-
   if $arch['high-availability'] {
     # Run the PE Replica Provision
     run_task('peadm::provision_replica', $master_target,
-      master_replica => $master_replica_target.peadm::target_name(),
-      token_file     => $token_file,
-    )
-
-    # Run the PE Replica Enable
-    run_task('peadm::enable_replica', $master_target,
       master_replica => $master_replica_target.peadm::target_name(),
       token_file     => $token_file,
     )
