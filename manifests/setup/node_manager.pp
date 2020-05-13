@@ -90,7 +90,7 @@ class peadm::setup::node_manager (
     ensure  => 'present',
     parent  => 'PE Compiler',
     rule    => ['and',
-      ['=', ['trusted', 'extensions', peadm::oid('pe_auth_role')], 'pe_compiler'],
+      ['=', ['trusted', 'extensions', peadm::oid('pp_auth_role')], 'pe_compiler'],
       ['=', ['trusted', 'extensions', peadm::oid('peadm_availability_group')], 'A'],
     ],
     classes => {
@@ -141,7 +141,7 @@ class peadm::setup::node_manager (
       ensure  => 'present',
       parent  => 'PE Compiler',
       rule    => ['and',
-        ['=', ['trusted', 'extensions', peadm::oid('pe_auth_role')], 'pe_compiler'],
+        ['=', ['trusted', 'extensions', peadm::oid('pp_auth_role')], 'pe_compiler'],
         ['=', ['trusted', 'extensions', peadm::oid('peadm_availability_group')], 'B'],
       ],
       classes => {
