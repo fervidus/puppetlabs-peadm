@@ -351,9 +351,11 @@ plan peadm::action::install (
 
   # The puppetserver might be in the middle of a restart after the Puppet run,
   # so we check the status by calling the api and ensuring the puppetserver is
-  # taking requests before proceeding.
+  # taking requests before proceeding. It takes two runs to fully finish
+  # configuration.
   run_task('peadm::puppet_runonce', $master_target)
   peadm::wait_until_service_ready('pe-master', $master_target)
+  run_task('peadm::puppet_runonce', $master_target)
 
   # Cleanup temp bootstrapping config
   ['master', 'puppetdb_database', 'puppetdb_database_replica'].each |$var| {
