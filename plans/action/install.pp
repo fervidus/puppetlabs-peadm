@@ -165,7 +165,7 @@ plan peadm::action::install (
   # configured certnames. Right now for these hosts we need to do that by
   # staging a puppet.conf file.
   ['master', 'puppetdb_database', 'puppetdb_database_replica'].each |$var| {
-    $target  = getvar("${var}_target")
+    $target  = getvar("${var}_target", [])
     $pe_conf = getvar("${var}_pe_conf")
 
     peadm::file_content_upload($pe_conf, '/tmp/pe.conf', $target)
@@ -343,11 +343,9 @@ plan peadm::action::install (
   # For now, waiting a short period of time is necessary to avoid a small race.
   ctrl::sleep(15)
 
-  if !empty($agent_installer_targets) {
-    run_task('peadm::sign_csr', $master_target,
-      certnames => $agent_installer_targets.map |$target| { $target.name },
-    )
-  }
+  run_task('peadm::sign_csr', $master_target,
+    certnames => $agent_installer_targets.map |$target| { $target.name },
+  )
 
   # The puppetserver might be in the middle of a restart after the Puppet run,
   # so we check the status by calling the api and ensuring the puppetserver is
