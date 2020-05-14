@@ -18,6 +18,8 @@ plan peadm::upgrade (
   # Other
   String[1] $stagingdir = '/tmp',
 ) {
+  peadm::validate_version($version)
+
   # Ensure input valid for a supported architecture
   $arch = peadm::validate_architecture(
     $master_host,

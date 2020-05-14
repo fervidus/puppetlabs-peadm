@@ -20,6 +20,8 @@ plan peadm::action::configure (
   # Other
   String           $stagingdir = '/tmp',
 ) {
+  # TODO: get and validate PE version
+
   # Convert inputs into targets.
   $master_target                    = peadm::get_targets($master_host, 1)
   $master_replica_target            = peadm::get_targets($master_replica_host, 1)
