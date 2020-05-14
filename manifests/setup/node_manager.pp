@@ -149,7 +149,7 @@ class peadm::setup::node_manager (
           'database_host' => $puppetdb_database_replica_host,
         },
         'puppet_enterprise::profile::master'   => {
-          'puppetdb_host' => ['"${trusted[\'certname\']}"', $master_host], # lint:ignore:single_quote_string_with_variables
+          'puppetdb_host' => ['${trusted[\'certname\']}', $master_host], # lint:ignore:single_quote_string_with_variables
           'puppetdb_port' => [8081],
         }
       },
