@@ -105,7 +105,7 @@ plan peadm::convert (
   run_plan('peadm::util::add_cert_extensions', $compiler_a_targets,
     master_host => $master_target,
     extensions  => {
-      peadm::oid('peadm_role')               => 'puppet/compiler',
+      'pp_auth_role'                         => 'pe_compiler',
       peadm::oid('peadm_availability_group') => 'A',
     },
   )
@@ -113,7 +113,7 @@ plan peadm::convert (
   run_plan('peadm::util::add_cert_extensions', $compiler_b_targets,
     master_host => $master_target,
     extensions  => {
-      peadm::oid('peadm_role')               => 'puppet/compiler',
+      'pp_auth_role'                         => 'pe_compiler',
       peadm::oid('peadm_availability_group') => 'B',
     },
   )
@@ -123,7 +123,22 @@ plan peadm::convert (
   apply($master_target) {
     class { 'peadm::setup::node_manager_yaml':
       master_host => $master_target.peadm::target_name(),
-    }
+    } ->
+
+    node_group { 'PE Compiler':
+      ensure               => 'present',
+      parent               => 'PE Master',
+      environment          => 'production',
+      override_environment => 'false',
+      rule                 => ['and', ['=', ['trusted', 'extensions', 'pp_auth_role'], 'pe_compiler']],
+      classes              => {
+        'puppet_enterprise::profile::puppetdb' => { }
+        'puppet_enterprise::profile::master'   => {
+          'puppetdb_host' => ['${trusted[\'certname\']}'],
+          'puppetdb_port' => [8081],
+        },
+      },
+    } ->
 
     class { 'peadm::setup::node_manager':
       master_host                    => $master_target.peadm::target_name(),
@@ -131,7 +146,6 @@ plan peadm::convert (
       puppetdb_database_host         => $puppetdb_database_target.peadm::target_name(),
       puppetdb_database_replica_host => $puppetdb_database_replica_target.peadm::target_name(),
       compiler_pool_address          => $compiler_pool_address,
-      require                        => Class['peadm::setup::node_manager_yaml'],
     }
   }
 
