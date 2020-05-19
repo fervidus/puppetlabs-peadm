@@ -132,7 +132,7 @@ plan peadm::convert (
       override_environment => 'false',
       rule                 => ['and', ['=', ['trusted', 'extensions', 'pp_auth_role'], 'pe_compiler']],
       classes              => {
-        'puppet_enterprise::profile::puppetdb' => { }
+        'puppet_enterprise::profile::puppetdb' => { },
         'puppet_enterprise::profile::master'   => {
           'puppetdb_host' => ['${trusted[\'certname\']}'],
           'puppetdb_port' => [8081],
