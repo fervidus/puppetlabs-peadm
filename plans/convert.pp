@@ -159,7 +159,7 @@ plan peadm::convert (
       ensure               => 'present',
       parent               => 'PE Master',
       environment          => 'production',
-      override_environment => 'false',
+      override_environment => false,
       rule                 => ['and', ['=', ['trusted', 'extensions', 'pp_auth_role'], 'pe_compiler']],
       classes              => {
         'puppet_enterprise::profile::puppetdb' => { },
