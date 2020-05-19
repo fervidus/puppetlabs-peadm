@@ -149,7 +149,11 @@ plan peadm::convert (
   apply($master_target) {
     class { 'peadm::setup::node_manager_yaml':
       master_host => $master_target.peadm::target_name(),
-    } ->
+      before      => [
+        Node_group['PE Compiler'],
+        Class['peadm::setup::node_manager'],
+      ],
+    }
 
     node_group { 'PE Compiler':
       ensure               => 'present',
@@ -164,7 +168,7 @@ plan peadm::convert (
           'puppetdb_port' => [8081],
         },
       },
-    } ->
+    }
 
     class { 'peadm::setup::node_manager':
       master_host                    => $master_target.peadm::target_name(),
