@@ -46,18 +46,20 @@ plan peadm::convert (
   }
 
   # Clusters A and B are used to divide PuppetDB availability for compilers. If
-  # the compilers given already have pp_cluster facts designating them A or B,
-  # use that. Otherwise, divide them by modulus of 2.
+  # the compilers given already have peadm_availability_group facts designating
+  # them A or B, use that. Otherwise, divide them by modulus of 2.
   if $arch['high-availability'] {
     $compiler_a_targets = $compiler_targets.filter |$index,$target| {
-      $compiler_extensions[$target.peadm::target_name()][peadm::oid('pp_cluster')] =~ /^[AB]$/ ? {
-        true  => $compiler_extensions[$target.peadm::target_name()][peadm::oid('pp_cluster')] == 'A',
+      $exts = $compiler_extensions[$target.peadm::target_name()]
+      $exts[peadm::oid('peadm_availability_group')] in ['A', 'B'] ? {
+        true  => $exts[peadm::oid('peadm_availability_group')] == 'A',
         false => $index % 2 == 0,
       }
     }
     $compiler_b_targets = $compiler_targets.filter |$index,$target| {
-      $compiler_extensions[$target.peadm::target_name()][peadm::oid('pp_cluster')] =~ /^[AB]$/ ? {
-        true  => $compiler_extensions[$target.peadm::target_name()][peadm::oid('pp_cluster')] == 'B',
+      $exts = $compiler_extensions[$target.peadm::target_name()]
+      $exts[peadm::oid('peadm_availability_group')] in ['A', 'B'] ? {
+        true  => $exts[peadm::oid('peadm_availability_group')] == 'B',
         false => $index % 2 != 0,
       }
     }
