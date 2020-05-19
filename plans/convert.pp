@@ -69,6 +69,28 @@ plan peadm::convert (
     $compiler_b_targets = []
   }
 
+  # Ensure that certificates requesting authorization extensions can be signed.
+  # It's set up this way by default in 2019.7 and newer but isn't present in
+  # older versions.
+  apply($master_target) {
+    $caconf = @(EOF)
+      # CA-related settings
+      certificate-authority: {
+        allow-subject-alt-names: true
+        allow-authorization-extensions: true
+        enable-infra-crl: true
+      }
+      | EOF
+
+    file { '/etc/puppetlabs/puppetserver/conf.d/ca.conf':
+      ensure  => file,
+      content => $caconf,
+      notify  => Service['pe-puppetserver'],
+    }
+
+    service { 'pe-puppetserver': }
+  }
+
   # Modify csr_attributes.yaml and insert the peadm-specific OIDs to identify
   # each server's role and availability group
 
