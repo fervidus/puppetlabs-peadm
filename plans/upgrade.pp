@@ -55,6 +55,11 @@ plan peadm::upgrade (
     $memo + { $result.target => $result['extensions'] }
   }
 
+  # Determine PE version currently installed on master
+  $current_pe_version = run_task('peadm::read_file', $master_target,
+    path => '/opt/puppetlabs/server/pe_build',
+  ).first['content']
+
   # Ensure needed trusted facts are available
   if $trusted_facts.any |$t,$ext| { $ext[peadm::oid('peadm_role')] == undef } {
     fail_plan(@(HEREDOC/L))
@@ -142,8 +147,9 @@ plan peadm::upgrade (
   }
 
   # Upgrade the compiler group A targets
-  run_task('peadm::agent_upgrade', $compiler_m1_targets,
-    server => $master_target.peadm::target_name(),
+  run_task('peadm::puppet_infra_upgrade', $master_target,
+    type    => 'compiler',
+    targets => $compiler_m1_targets.map |$t| { $t.peadm::target_name() }
   )
 
   ###########################################################################
@@ -165,14 +171,16 @@ plan peadm::upgrade (
   # Re-run Puppet immediately to fully re-enable
   run_task('peadm::puppet_runonce', $puppetdb_database_replica_target)
 
-  # Run the upgrade.sh script on the master replica target
-  run_task('peadm::agent_upgrade', $master_replica_target,
-    server => $master_target.peadm::target_name(),
+  # Upgrade the master replica
+  run_task('peadm::puppet_infra_upgrade', $master_target,
+    type    => 'replica',
+    targets => $master_replica_target.map |$t| { $t.peadm::target_name() }
   )
 
   # Upgrade the compiler group B targets
-  run_task('peadm::agent_upgrade', $compiler_m2_targets,
-    server => $master_target.peadm::target_name(),
+  run_task('peadm::puppet_infra_upgrade', $master_target,
+    type    => 'compiler',
+    targets => $compiler_m2_targets.map |$t| { $t.peadm::target_name() }
   )
 
   ###########################################################################
